@@ -1,4 +1,7 @@
-﻿namespace bchunkGUIWin;
+﻿using System.Drawing;
+using System.Windows.Forms;
+
+namespace bchunkGUIWin;
 
 partial class Form1
 {

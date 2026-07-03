@@ -1,5 +1,8 @@
+using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
+using System.Windows.Forms;
 
 namespace bchunkGUIWin;
 
@@ -7,6 +10,7 @@ public partial class Form1 : Form
 {
     private Label binLabel;
     private Label cueLabel;
+    private Label progressLabel;
     private string binPath = "";
     private string cuePath = "";
 
@@ -50,48 +54,66 @@ public partial class Form1 : Form
         convertButton.AutoSize = true;
         convertButton.Click += ClickConvertButton;
         this.Controls.Add(convertButton);
+
+        progressLabel = new Label();
+        progressLabel.Text = "";
+        progressLabel.Location = new Point(250, 350);
+        progressLabel.Font = new Font("Calibri", 16, FontStyle.Bold);
+        progressLabel.AutoSize = true;
+        this.Controls.Add(progressLabel);
     }
 
     private void ClickOpenBinButton(object? sender, EventArgs e)
     {
-        using (OpenFileDialog fileDialog = new OpenFileDialog())
-        {
-            fileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            
-            fileDialog.Filter = "Bin files (*.bin)|*.bin";
-
-            if (fileDialog.ShowDialog() == DialogResult.OK)
-            {
-                binPath = fileDialog.FileName;
-                string filename = Path.GetFileName(binPath);
-
-                MessageBox.Show($"You selected: {filename}", "File Loaded");
-                binLabel.Text = $"bin: {filename}";
-            }
-        }
+        OpenDialog("bin");
     }
 
     private void ClickOpenCueButton(object? sender, EventArgs e)
+    {
+        OpenDialog("cue");
+    }
+
+    private void OpenDialog(string ext)
     {
         using (OpenFileDialog fileDialog = new OpenFileDialog())
         {
             fileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             
-            fileDialog.Filter = "Cue files (*.cue)|*.cue";
+            if (ext == "bin")
+            {
+                fileDialog.Filter = "Bin files (*.bin)|*.bin";
+            }
+            else if (ext == "cue")
+            {
+                fileDialog.Filter = "Cue files (*.cue)|*.cue";
+            }
 
             if (fileDialog.ShowDialog() == DialogResult.OK)
             {
-                cuePath = fileDialog.FileName;
-                string filename = Path.GetFileName(cuePath);
-
+                string filename = "";
+                if (ext == "bin")
+                {
+                    binPath = fileDialog.FileName;
+                    filename = Path.GetFileName(binPath);
+                    binLabel.Text = $"bin: {filename}";
+                }
+                else if (ext == "cue")
+                {
+                    cuePath = fileDialog.FileName;
+                    filename = Path.GetFileName(cuePath);
+                    cueLabel.Text = $"cue: {filename}";
+                }
+                
                 MessageBox.Show($"You selected: {filename}", "File Loaded");
-                cueLabel.Text = $"cue: {filename}";
             }
         }
     }
 
     private void ClickConvertButton(object? sender, EventArgs e)
     {
+        progressLabel.Text = "Converting. . .";
+        progressLabel.Refresh();
+
         if (binPath == "" || cuePath == "")
         {
             MessageBox.Show("Unable to convert since at least one file was not provided!");
@@ -126,10 +148,12 @@ public partial class Form1 : Form
 
                     if (process.ExitCode == 0)
                     {
+                        progressLabel.Text = "Success!";
                         MessageBox.Show("Conversion success!", "Success!");
                     }
                     else
                     {
+                        progressLabel.Text = "Failure!";
                         MessageBox.Show("Failure with exit code {process.ExitCode} and Error: {error}", "Error");
                     }
                 }
@@ -137,6 +161,7 @@ public partial class Form1 : Form
         }
         catch (Exception e)
         {
+            progressLabel.Text = "Failure!";
             MessageBox.Show($"Sorry the conversion failed hard because: {e.Message}", "Execution Error");
         }
     }
